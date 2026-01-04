@@ -6,19 +6,21 @@ from flask import Flask
 from threading import Thread
 
 # --- SOZLAMALAR ---
-# Siz yuborgan yangi API Token kiritildi
+# Google AI API kaliti
 GEMINI_API_KEY = "AIzaSyCIjtFeGW7EN1ABt9COZ3KH48REWi2kASM"
-TELEGRAM_BOT_TOKEN = "8284928912:AAEN7xyAq5FGTFyytme707TYEde3DT3zx8Q"
+# Siz hozirgina ochgan yangi bot tokeni
+TELEGRAM_BOT_TOKEN = "8240634759:AAHuD-4x4yAZ9o2IQKdJU9B26d9Dxl_Icd0"
+# Sizning chat ID (vakansiyalarni saralash uchun)
 MY_CHAT_ID = "594226936" 
 
-# Modelni eng barqaror 'gemini-pro' versiyasiga o'rnatdik
+# Gemini AI modelini sozlash
 genai.configure(api_key=GEMINI_API_KEY)
 model = genai.GenerativeModel('gemini-pro')
 
-# Render serveri to'xtab qolmasligi uchun veb-interfeys
+# Render serveri uchun kichik veb-interfeys (Bot o'chib qolmasligi uchun)
 app = Flask('')
 @app.route('/')
-def home(): return "Bot faol va ishlamoqda!"
+def home(): return "Yangi bot muvaffaqiyatli ishlamoqda!"
 
 def run(): app.run(host='0.0.0.0', port=8080)
 
@@ -28,15 +30,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_text = update.message.text
     chat_type = update.message.chat.type
 
-    # AI uchun yangilangan yo'riqnoma
+    # AI uchun yo'riqnoma
     prompt = f"""
-    Sen "Turkcha Vakansiya Bot"san. Foydali va sadoqatli yordamchisan.
+    Sen "Turkcha Vakansiya Bot"san. Muhriddin (@Muhriddin_dev) tomonidan yaratilgan aqlli yordamchisan.
     
-    QOIDALAR:
-    1. Yaratuvching: Muhriddin (@Muhriddin_dev). Agar kimdir seni kim yaratganini so'rasa, "Meni Muhriddin (@Muhriddin_dev) yaratgan" deb javob ber.
-    2. Vakansiya saralash: Agar matn turkcha ish e'loni bo'lsa (ish, eleman, aranyor so'zlari bo'lsa), uni o'zbek tilida: Lavozim, Maosh, Manzil va Aloqa formatida sarala.
-    3. Ish qidiruvchilarga: Ularning hunariga qarab Turkiyadan ish topish bo'yicha maslahat ber.
-    4. Suhbat: Har qanday savolga o'zbek tilida aqlli javob ber.
+    VAZIFALARING:
+    1. Agar foydalanuvchi turkcha ish e'loni yuborsa (ish, eleman, aranyor kabi so'zlar bo'lsa), uni o'zbek tilida: Lavozim, Maosh, Manzil va Aloqa qilib chiroyli sarala.
+    2. Agar foydalanuvchi "Seni kim yaratgan?" deb so'rasa, "Meni Muhriddin (@Muhriddin_dev) yaratgan" deb javob ber.
+    3. Boshqa barcha savollarga o'zbek tilida muloyim va aqlli javob qaytar.
     
     Foydalanuvchi yozdi: {user_text}
     """
@@ -46,25 +47,25 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         result = response.text
         
         if chat_type in ['group', 'supergroup']:
-            # Guruhlardagi vakansiyalarni faqat sizga saralab yuboradi
+            # Guruhlarda faqat vakansiya bo'lsa Muhriddinga yuboradi
             if any(word in user_text.lower() for word in ["iş", "eleman", "aranıyor", "vakansiya"]):
-                await context.bot.send_message(chat_id=MY_CHAT_ID, text=f"Guruhdan yangi vakansiya:\n\n{result}")
+                await context.bot.send_message(chat_id=MY_CHAT_ID, text=f"Guruhdan vakansiya keldi:\n\n{result}")
         else:
-            # Shaxsiy chatda bot to'g'ridan-to'g'ri javob beradi
+            # Shaxsiy suhbatda har doim javob beradi
             await update.message.reply_text(result)
             
     except Exception as e:
         print(f"Xatolik yuz berdi: {e}")
 
 if __name__ == '__main__':
-    # Veb-serverni alohida oqimda ishga tushirish
+    # Veb-serverni ishga tushirish
     Thread(target=run).start()
     
     # Telegram botni ishga tushirish
-    # drop_pending_updates=True eski "Conflict" va tiqilib qolgan xabarlarni tozalaydi
+    # drop_pending_updates=True eski xabarlarni tozalab, botni toza ishga tushiradi
     application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
     application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_message))
     
-    print("Bot ishga tushdi...")
+    print("Yangi bot ishga tushdi...")
     application.run_polling(drop_pending_updates=True)
 
