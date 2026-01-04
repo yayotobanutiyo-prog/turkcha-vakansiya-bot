@@ -6,15 +6,16 @@ from flask import Flask
 from threading import Thread
 
 # --- SOZLAMALAR ---
+# Siz yuborgan yangi API Token kiritildi
 GEMINI_API_KEY = "AIzaSyCIjtFeGW7EN1ABt9COZ3KH48REWi2kASM"
-TELEGRAM_BOT_TOKEN = "8284928912:AAFBHZlDJ20uK461iypQ8aROKg4w3zKS3QY"
+TELEGRAM_BOT_TOKEN = "8284928912:AAEN7xyAq5FGTFyytme707TYEde3DT3zx8Q"
 MY_CHAT_ID = "594226936" 
 
-# Model nomini 'gemini-pro'ga o'zgartirdik, bu eng ishonchli va 404 xatosi bermaydigan versiya
+# Modelni eng barqaror 'gemini-pro' versiyasiga o'rnatdik
 genai.configure(api_key=GEMINI_API_KEY)
 model = genai.GenerativeModel('gemini-pro')
 
-# Render serveri uchun kichik veb-interfeys
+# Render serveri to'xtab qolmasligi uchun veb-interfeys
 app = Flask('')
 @app.route('/')
 def home(): return "Bot faol va ishlamoqda!"
@@ -45,22 +46,22 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         result = response.text
         
         if chat_type in ['group', 'supergroup']:
-            # Guruhlarda faqat vakansiya so'zlari bo'lsa sizga yuboradi
+            # Guruhlardagi vakansiyalarni faqat sizga saralab yuboradi
             if any(word in user_text.lower() for word in ["iş", "eleman", "aranıyor", "vakansiya"]):
                 await context.bot.send_message(chat_id=MY_CHAT_ID, text=f"Guruhdan yangi vakansiya:\n\n{result}")
         else:
-            # Shaxsiy suhbatda har doim javob qaytaradi
+            # Shaxsiy chatda bot to'g'ridan-to'g'ri javob beradi
             await update.message.reply_text(result)
             
     except Exception as e:
         print(f"Xatolik yuz berdi: {e}")
 
 if __name__ == '__main__':
-    # Veb-serverni ishga tushirish
+    # Veb-serverni alohida oqimda ishga tushirish
     Thread(target=run).start()
     
     # Telegram botni ishga tushirish
-    # drop_pending_updates=True - bu eski tiqilib qolgan xabarlarni tozalaydi
+    # drop_pending_updates=True eski "Conflict" va tiqilib qolgan xabarlarni tozalaydi
     application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
     application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_message))
     
